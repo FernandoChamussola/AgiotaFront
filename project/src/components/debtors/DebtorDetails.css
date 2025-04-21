@@ -1,0 +1,58 @@
+.debtor-profile {
+  margin-bottom: 2rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+}
+
+.info-value {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.info-value.highlight {
+  color: var(--primary-color);
+}
+
+.info-value.paid {
+  color: var(--success-color);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge.pending {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.status-badge.paid {
+  background-color: var(--success-color);
+  color: white;
+}
