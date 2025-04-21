@@ -20,7 +20,8 @@ function Login({ onLogin }) {
     e.preventDefault();
     axios.post('https://gestor-agiota.onrender.com/api/auth/login', formData)
     .then(response => {
-      console.log('Login attempt with:', formData);
+      localStorage.setItem('usuarioId', response.data.id);
+      console.log('id:', response.data.id);
       onLogin();
       navigate('/dashboard');
     })
