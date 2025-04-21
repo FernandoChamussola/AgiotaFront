@@ -17,7 +17,7 @@ function Dashboard() {
   
   const getDashboard = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/relatorios/dashboard/${usuarioId}`);
+      const response = await axios.get(`https://gestor-agiota.onrender.com/api/relatorios/dashboard/${usuarioId}`);
       const dashboardData = response.data;
       setDashboard(dashboardData);
     } catch (error) {

@@ -17,7 +17,7 @@ function Debtors() {
   useEffect(() => {
     console.log("executando pedido de devedores")
     const usuarioId = localStorage.getItem('usuarioId');
-    axios.get(`http://localhost:3000/api/devedor/usuario/${usuarioId}`)
+    axios.get(`https://gestor-agiota.onrender.com/api/devedor/usuario/${usuarioId}`)
       .then(response => {
         setDebtorsList(response.data);
         console.log(response.data);
@@ -47,7 +47,7 @@ function Debtors() {
       telefone: '258',
       endereco: ''
     });
-    axios.post('http://localhost:3000/api/devedor/register', formData)
+    axios.post('https://gestor-agiota.onrender.com/api/devedor/register', formData)
     .then(response => {
       console.log(response.data);
       setShowForm(false);

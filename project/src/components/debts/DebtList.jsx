@@ -38,7 +38,7 @@ function DebtList() {
   useEffect(() => {
     console.log("Executando pedido de devedores");
     const usuarioId = localStorage.getItem('usuarioId');
-    axios.get(`http://localhost:3000/api/devedor/usuario/${usuarioId}`)
+    axios.get(`https://gestor-agiota.onrender.com/api/devedor/usuario/${usuarioId}`)
       .then(response => {
         setDebtorsList(response.data);
         console.log("Devedores:", response.data);
@@ -52,7 +52,7 @@ function DebtList() {
   useEffect(() => {
     console.log("Executando pedido de dívidas");
     const usuarioId = localStorage.getItem('usuarioId');
-    axios.get(`http://localhost:3000/api/divida/usuario/${usuarioId}`)
+    axios.get(`https://gestor-agiota.onrender.com/api/divida/usuario/${usuarioId}`)
       .then(response => {
         setDebtsList(response.data);
         console.log("Dívidas:", response.data);

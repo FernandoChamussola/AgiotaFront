@@ -27,7 +27,7 @@ function DebtDetails() {
     const fetchDivida = async () => {
       try {
         // Fetch debt details
-        const dividaResponse = await axios.get(`http://localhost:3000/api/divida/${id}`);
+        const dividaResponse = await axios.get(`https://gestor-agiota.onrender.com/api/divida/${id}`);
         const dividaData = dividaResponse.data;
         console.log('Detalhes da Dívida:', dividaData);
         setDivida(dividaData);
@@ -54,7 +54,7 @@ function DebtDetails() {
         });
 
         // Fetch payment history
-        const pagamentoResponse = await axios.get(`http://localhost:3000/api/pagamento/divida/${id}`);
+        const pagamentoResponse = await axios.get(`https://gestor-agiota.onrender.com/api/pagamento/divida/${id}`);
         const { pagamentos, totalPago } = pagamentoResponse.data;
         setPagamentos(pagamentos);
         // Calculate valorTotal: valorInicial + interest - total payments
@@ -93,10 +93,10 @@ function DebtDetails() {
           : null,
         observacoes: formData.observacoes,
       };
-      await axios.put(`http://localhost:3000/api/divida/${id}`, updatedData);
+      await axios.put(`https://gestor-agiota.onrender.com/api/divida/${id}`, updatedData);
       setIsEditing(false);
       // Refresh debt details
-      const response = await axios.get(`http://localhost:3000/api/divida/${id}`);
+      const response = await axios.get(`https://gestor-agiota.onrender.com/api/divida/${id}`);
       setDivida(response.data);
       alert('Dívida atualizada com sucesso!');
     } catch (err) {
@@ -114,16 +114,16 @@ function DebtDetails() {
         setError('O valor do pagamento deve ser maior que zero');
         return;
       }
-      await axios.post(`http://localhost:3000/api/pagamento`, {
+      await axios.post(`https://gestor-agiota.onrender.com/api/pagamento`, {
         dividaId: id,
         valorPagamento,
       });
       setPaymentForm({ valorPagamento: '' });
       setIsRegisteringPayment(false);
       // Refresh debt and payment details
-      const dividaResponse = await axios.get(`http://localhost:3000/api/divida/${id}`);
+      const dividaResponse = await axios.get(`https://gestor-agiota.onrender.com/api/divida/${id}`);
       setDivida(dividaResponse.data);
-      const pagamentoResponse = await axios.get(`http://localhost:3000/api/pagamento/divida/${id}`);
+      const pagamentoResponse = await axios.get(`https://gestor-agiota.onrender.com/api/pagamento/divida/${id}`);
       const { pagamentos, totalPago } = pagamentoResponse.data;
       setPagamentos(pagamentos);
       const interest = (dividaResponse.data.valorInicial * dividaResponse.data.taxaJuros) / 100;
@@ -151,7 +151,7 @@ function DebtDetails() {
   const handleDelete = async () => {
     if (window.confirm('Tem certeza que deseja excluir esta dívida?')) {
       try {
-        await axios.delete(`http://localhost:3000/api/divida/${id}`);
+        await axios.delete(`https://gestor-agiota.onrender.com/api/divida/${id}`);
         alert('Dívida excluída com sucesso!');
         navigate('/');
       } catch (err) {

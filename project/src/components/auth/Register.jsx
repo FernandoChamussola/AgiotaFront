@@ -21,7 +21,7 @@ function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post('http://localhost:3000/api/auth/register', formData)
+    axios.post('https://gestor-agiota.onrender.com/api/auth/register', formData)
       .then(response => {
         console.log(response.data);
         localStorage.setItem('usuarioId', response.data.id);

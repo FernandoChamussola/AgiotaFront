@@ -18,7 +18,7 @@ function Login({ onLogin }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post('http://localhost:3000/api/auth/login', formData)
+    axios.post('https://gestor-agiota.onrender.com/api/auth/login', formData)
     .then(response => {
       console.log('Login attempt with:', formData);
       onLogin();

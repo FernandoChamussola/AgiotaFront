@@ -18,7 +18,7 @@ function NewDebt() {
 
   useEffect(() => {
     const usuarioId = localStorage.getItem('usuarioId');
-    axios.get(`http://localhost:3000/api/devedor/usuario/${usuarioId}`)
+    axios.get(`https://gestor-agiota.onrender.com/api/devedor/usuario/${usuarioId}`)
       .then(response => {
         setDebtorOptions(response.data);
         console.log(response.data);
@@ -41,7 +41,7 @@ function NewDebt() {
     // In a real app, we would save the new debt
     console.log('New debt created:', formData);
     
-    axios.post('http://localhost:3000/api/divida', formData)
+    axios.post('https://gestor-agiota.onrender.com/api/divida', formData)
       .then(response => {
         console.log('Dívida criada com sucesso:', response.data);
         // Redirect to debts list
