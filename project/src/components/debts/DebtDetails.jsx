@@ -21,6 +21,23 @@ function DebtDetails() {
     observacoes: '',
   });
   const [error, setError] = useState(null);
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [notifyType, setNotifyType] = useState('upcoming');
+  const [customMessage, setCustomMessage] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  // Verificar se a dívida está vencida e por quantos dias
+  const getDaysOverdue = () => {
+    if (!divida || !divida.dataVencimento) return 0;
+    
+    const today = new Date();
+    const dueDate = new Date(divida.dataVencimento);
+    
+    const diffTime = today - dueDate;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays > 0 ? diffDays : 0;
+  };
 
   // Fetch debt details and payments on component mount
   useEffect(() => {
@@ -147,6 +164,81 @@ function DebtDetails() {
     setError(null);
   };
 
+  // Toggle notification modal
+  const toggleNotifyModal = () => {
+    setShowNotifyModal(!showNotifyModal);
+    setCustomMessage('');
+    setNotifyType('upcoming');
+    setError(null);
+  };
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('pt-MZ', {
+      style: 'currency',
+      currency: 'MZN'
+    }).format(amount);
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('pt-MZ');
+  };
+
+  // Prepare WhatsApp message based on type
+  const prepareMessage = () => {
+    if (!divida || !divida.devedor) return '';
+
+    const devedorNome = divida.devedor.nome;
+    const valorDivida = formatCurrency(valorTotal);
+    const dataVencimento = divida.dataVencimento ? formatDate(divida.dataVencimento) : 'não definida';
+    const diasAtraso = getDaysOverdue();
+
+    switch (notifyType) {
+      case 'upcoming':
+        return `Olá ${devedorNome}, este é um lembrete amigável de que sua dívida no valor de ${valorDivida} vence em ${dataVencimento}. Por favor, prepare-se para o pagamento. Obrigado! #Debt Tracker`;
+      case 'overdue':
+        return `Olá ${devedorNome}, sua dívida no valor de ${valorDivida} está atrasada há ${diasAtraso} dias (vencimento: ${dataVencimento}). Por favor, entre em contato para regularizar sua situação o mais rápido possível. #Debt Tracker`;
+      case 'custom':
+        return customMessage;
+      default:
+        return '';
+    }
+  };
+
+  // Send WhatsApp notification
+  const sendWhatsAppNotification = async () => {
+    if (!divida || !divida.devedor || !divida.devedor.telefone) {
+      setError('Telefone do devedor não disponível');
+      return;
+    }
+
+    const telefone = divida.devedor.telefone.replace(/\D/g, ''); // Remove non-numeric characters
+    const mensagem = prepareMessage();
+
+    if (!mensagem) {
+      setError('Mensagem não pode estar vazia');
+      return;
+    }
+
+    setSendingMessage(true);
+    try {
+      const response = await axios.post('https://mywhatssapapi.onrender.com/enviar', {
+        numero: telefone,
+        mensagem: mensagem
+      });
+      
+      console.log('Resposta da API:', response.data);
+      alert('Notificação enviada com sucesso!');
+      setShowNotifyModal(false);
+    } catch (err) {
+      setError('Erro ao enviar notificação: ' + (err.response?.data?.erro || err.message));
+      console.error('Erro ao enviar WhatsApp:', err);
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   // Handle debt deletion
   const handleDelete = async () => {
     if (window.confirm('Tem certeza que deseja excluir esta dívida?')) {
@@ -180,20 +272,31 @@ function DebtDetails() {
       {!isEditing ? (
         <div className="debt-info">
           <p><strong>Devedor:</strong> {divida.devedor?.nome || 'N/A'}</p>
-          <p><strong>Valor Inicial:</strong> R$ {divida.valorInicial?.toFixed(2) || '0.00'}</p>
+          <p><strong>Telefone:</strong> {divida.devedor?.telefone || 'N/A'}</p>
+          <p><strong>Valor Inicial:</strong> {formatCurrency(divida.valorInicial || 0)}</p>
           <p><strong>Taxa de Juros:</strong> {divida.taxaJuros || '0'}%</p>
-          <p><strong>Valor Total Devido:</strong> R$ {valorTotal}</p>
+          <p><strong>Valor Total Devido:</strong> {formatCurrency(valorTotal)}</p>
           <p>
             <strong>Data de Vencimento:</strong>{' '}
             {divida.dataVencimento
-              ? new Date(divida.dataVencimento).toLocaleDateString()
+              ? formatDate(divida.dataVencimento)
               : 'N/A'}
           </p>
-          <p><strong>Status:</strong> {divida.status || 'N/A'}</p>
+          <p>
+            <strong>Status:</strong>{' '}
+            <span className={`status-badge ${getDaysOverdue() > 0 && divida.status !== 'QUITADA' ? 'atrasada' : divida.status.toLowerCase()}`}>
+              {getDaysOverdue() > 0 && divida.status !== 'QUITADA' ? 'Atrasada' : 
+                divida.status === 'ATIVA' ? 'Ativa' : 
+                divida.status === 'QUITADA' ? 'Quitada' : divida.status}
+            </span>
+          </p>
           <p><strong>Observações:</strong> {divida.observacoes || 'Nenhuma'}</p>
-          <button onClick={toggleEdit}>Editar</button>
-          <button onClick={toggleRegisterPayment}>Registrar Pagamento</button>
-          <button onClick={handleDelete} className="delete-button">Excluir</button>
+          <div className="action-buttons">
+            <button onClick={toggleEdit}>Editar</button>
+            <button onClick={toggleRegisterPayment}>Registrar Pagamento</button>
+            <button onClick={toggleNotifyModal} className="notify-button">Notificar via WhatsApp</button>
+            <button onClick={handleDelete} className="delete-button">Excluir</button>
+          </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="edit-form">
@@ -260,14 +363,79 @@ function DebtDetails() {
         </form>
       )}
 
+      {/* Modal de Notificação WhatsApp */}
+      {showNotifyModal && (
+        <div className="notify-modal">
+          <div className="notify-modal-content">
+            <h3>Notificar via WhatsApp</h3>
+            <div className="notify-options">
+              <label>
+                <input
+                  type="radio"
+                  name="notifyType"
+                  value="upcoming"
+                  checked={notifyType === 'upcoming'}
+                  onChange={() => setNotifyType('upcoming')}
+                />
+                Lembrete de Pagamento Próximo
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="notifyType"
+                  value="overdue"
+                  checked={notifyType === 'overdue'}
+                  onChange={() => setNotifyType('overdue')}
+                />
+                Notificação de Atraso
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="notifyType"
+                  value="custom"
+                  checked={notifyType === 'custom'}
+                  onChange={() => setNotifyType('custom')}
+                />
+                Mensagem Personalizada
+              </label>
+            </div>
+            
+            {notifyType === 'custom' && (
+              <textarea
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                placeholder="Digite sua mensagem personalizada..."
+                rows={4}
+              />
+            )}
+
+            <div className="message-preview">
+              <h4>Prévia da Mensagem:</h4>
+              <p>{prepareMessage()}</p>
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                onClick={sendWhatsAppNotification} 
+                disabled={sendingMessage || (notifyType === 'custom' && !customMessage.trim())}
+              >
+                {sendingMessage ? 'Enviando...' : 'Enviar Notificação'}
+              </button>
+              <button onClick={toggleNotifyModal}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {pagamentos.length > 0 && (
         <div className="payment-history">
           <h3>Histórico de Pagamentos</h3>
           <ul>
             {pagamentos.map((pagamento) => (
               <li key={pagamento.id}>
-                Valor: R$ {pagamento.valor.toFixed(2)} - Data:{' '}
-                {new Date(pagamento.data).toLocaleDateString()}
+                Valor: {formatCurrency(pagamento.valor)} - Data:{' '}
+                {formatDate(pagamento.data)}
               </li>
             ))}
           </ul>

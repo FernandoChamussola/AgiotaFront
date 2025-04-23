@@ -24,14 +24,49 @@ function DebtList() {
     return new Date(dateString).toLocaleDateString('pt-MZ', options);
   };
   
-  // Função para obter o status formatado
-  const getStatusDisplay = (status) => {
+  // Função para verificar se a dívida está vencida
+  const isDebtOverdue = (dueDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const debtDate = new Date(dueDate);
+    debtDate.setHours(0, 0, 0, 0);
+    return debtDate < today;
+  };
+  
+  // Função para obter o status real da dívida, verificando a data de vencimento
+  const getRealStatus = (debt) => {
+    // Se a dívida está quitada, mantém o status
+    if (debt.status === 'QUITADA') {
+      return {
+        displayStatus: 'Quitada',
+        className: 'quitada',
+        originalStatus: debt.status
+      };
+    }
+    
+    // Verifica se a dívida está vencida
+    if (isDebtOverdue(debt.dataVencimento)) {
+      return {
+        displayStatus: 'Atrasada',
+        className: 'atrasada',
+        originalStatus: 'ATRASADA'
+      };
+    }
+    
+    // Caso contrário, mantém o status original
     const statusMap = {
-      'ATIVA': 'Ativa',
-      'ATRASADA': 'Atrasada',
-      'QUITADA': 'Quitada'
+      'ATIVA': { display: 'Ativa', className: 'ativa' },
+      'ATRASADA': { display: 'Atrasada', className: 'atrasada' },
+      'QUITADA': { display: 'Quitada', className: 'quitada' }
     };
-    return statusMap[status] || status;
+    
+    const status = statusMap[debt.status] || { display: debt.status, className: 'ativa' };
+    
+    return {
+      displayStatus: status.display,
+      className: status.className,
+      originalStatus: debt.status
+    };
   };
   
   // Efeito para buscar devedores
@@ -72,8 +107,12 @@ function DebtList() {
       matches = false;
     }
     
-    if (selectedStatus && debt.status !== selectedStatus) {
-      matches = false;
+    if (selectedStatus) {
+      // Se o status real da dívida for diferente do filtro, não mostrar
+      const realStatus = getRealStatus(debt);
+      if (realStatus.originalStatus !== selectedStatus) {
+        matches = false;
+      }
     }
     
     return matches;
@@ -143,29 +182,32 @@ function DebtList() {
                 </tr>
               </thead>
               <tbody>
-                {filteredDebts.map(debt => (
-                  <tr key={debt.id}>
-                    <td>{debt.devedor?.nome || 'Desconhecido'}</td>
-                    <td>{formatCurrency(debt.valorInicial)}</td>
-                    <td>{debt.taxaJuros}%</td>
-                    <td>{formatDate(debt.dataVencimento)}</td>
-                    <td>
-                      <span className={`status-badge ${debt.status.toLowerCase()}`}>
-                        {getStatusDisplay(debt.status)}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <Link 
-                          to={`/debts/${debt.id}`}
-                          className="action-link view-link"
-                        >
-                          Ver Detalhes
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredDebts.map(debt => {
+                  const statusInfo = getRealStatus(debt);
+                  return (
+                    <tr key={debt.id}>
+                      <td>{debt.devedor?.nome || 'Desconhecido'}</td>
+                      <td>{formatCurrency(debt.valorInicial)}</td>
+                      <td>{debt.taxaJuros}%</td>
+                      <td>{formatDate(debt.dataVencimento)}</td>
+                      <td>
+                        <span className={`status-badge ${statusInfo.className}`}>
+                          {statusInfo.displayStatus}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <Link 
+                            to={`/debts/${debt.id}`}
+                            className="action-link view-link"
+                          >
+                            Ver Detalhes
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
